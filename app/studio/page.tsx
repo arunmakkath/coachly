@@ -5,6 +5,9 @@ import { Button } from '@/components/ui/button';
 
 type Tab = 'content' | 'blog';
 
+// Content version - increment this when default content changes
+const CONTENT_VERSION = '1.0.0';
+
 export default function StudioPage() {
   const [activeTab, setActiveTab] = useState<Tab>('content');
   const [posts, setPosts] = useState<any[]>([]);
@@ -17,7 +20,7 @@ export default function StudioPage() {
   });
 
   // Site content state - Satheesan Edavath's default content
-  const [siteContent, setSiteContent] = useState({
+  const defaultSiteContent = {
     coachName: 'Satheesan Edavath',
     contactEmail: 'contact@satheesan.com',
     heroTitle: 'Unlock Your Potential with Strategic Executive Coaching',
@@ -34,7 +37,9 @@ What makes my approach authentic is that it is forged in the reality of the boar
 My methodology utilizes Systemic Team Coaching and Action-Oriented Mentorship. We examine the entirety of your professional ecosystem—from your internal decision-making processes to the external pressures of global competition. We focus on creating a blueprint for "Professional Maturity," ensuring that every goal we set leads to a tangible, professional transformation that scales alongside your business.
 
 When you work with me, you are choosing a partner who values consistency and accessibility. To ensure your progress remains constant between our deep-dive sessions, I offer a unique 24/7 AI-powered coaching assistant. This tool serves as a digital extension of our work, providing you with resources, accountability, and strategic reflection at any hour, ensuring your journey toward potential never pauses.`,
-  });
+  };
+
+  const [siteContent, setSiteContent] = useState(defaultSiteContent);
 
   useEffect(() => {
     // Load existing blog posts
@@ -43,10 +48,43 @@ When you work with me, you are choosing a partner who values consistency and acc
       setPosts(JSON.parse(savedPosts));
     }
 
-    // Load site content
+    // Load site content with version checking
     const savedContent = localStorage.getItem('demo_site_content');
     if (savedContent) {
-      setSiteContent(JSON.parse(savedContent));
+      try {
+        const parsed = JSON.parse(savedContent);
+
+        // Check if stored version matches current version
+        if (parsed.version !== CONTENT_VERSION) {
+          // Version mismatch - reset to new default content
+          console.log('Content version updated, resetting studio to defaults');
+          const newContent = {
+            ...defaultSiteContent,
+            version: CONTENT_VERSION,
+          };
+          localStorage.setItem('demo_site_content', JSON.stringify(newContent));
+          setSiteContent(defaultSiteContent);
+        } else {
+          // Version matches - use stored content
+          setSiteContent(parsed);
+        }
+      } catch (e) {
+        console.error('Failed to parse site content', e);
+        // On parse error, reset to defaults
+        const newContent = {
+          ...defaultSiteContent,
+          version: CONTENT_VERSION,
+        };
+        localStorage.setItem('demo_site_content', JSON.stringify(newContent));
+        setSiteContent(defaultSiteContent);
+      }
+    } else {
+      // No stored content - save defaults with version
+      const newContent = {
+        ...defaultSiteContent,
+        version: CONTENT_VERSION,
+      };
+      localStorage.setItem('demo_site_content', JSON.stringify(newContent));
     }
   }, []);
 
@@ -71,7 +109,11 @@ When you work with me, you are choosing a partner who values consistency and acc
 
   const handleContentSave = (e: React.FormEvent) => {
     e.preventDefault();
-    localStorage.setItem('demo_site_content', JSON.stringify(siteContent));
+    const contentWithVersion = {
+      ...siteContent,
+      version: CONTENT_VERSION,
+    };
+    localStorage.setItem('demo_site_content', JSON.stringify(contentWithVersion));
     alert('Site content saved! Refresh the home page to see changes.');
   };
 

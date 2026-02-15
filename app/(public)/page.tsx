@@ -4,6 +4,9 @@ import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
 
+// Content version - increment this when default content changes
+const CONTENT_VERSION = '1.0.0';
+
 export default function HomePage() {
   // Default content - Satheesan Edavath's coaching website
   const defaultContent = {
@@ -31,17 +34,45 @@ When you work with me, you are choosing a partner who values consistency and acc
     if (savedContent) {
       try {
         const parsed = JSON.parse(savedContent);
-        setContent({
-          heroTitle: parsed.heroTitle || defaultContent.heroTitle,
-          heroSubtitle: parsed.heroSubtitle || defaultContent.heroSubtitle,
-          aboutTitle: parsed.aboutTitle || defaultContent.aboutTitle,
-          aboutContent: parsed.aboutContent || defaultContent.aboutContent,
-          philosophyTitle: parsed.philosophyTitle || defaultContent.philosophyTitle,
-          philosophyContent: parsed.philosophyContent || defaultContent.philosophyContent,
-        });
+
+        // Check if stored version matches current version
+        if (parsed.version !== CONTENT_VERSION) {
+          // Version mismatch - reset to new default content
+          console.log('Content version updated, resetting to defaults');
+          const newContent = {
+            ...defaultContent,
+            version: CONTENT_VERSION,
+          };
+          localStorage.setItem('demo_site_content', JSON.stringify(newContent));
+          setContent(defaultContent);
+        } else {
+          // Version matches - use stored content
+          setContent({
+            heroTitle: parsed.heroTitle || defaultContent.heroTitle,
+            heroSubtitle: parsed.heroSubtitle || defaultContent.heroSubtitle,
+            aboutTitle: parsed.aboutTitle || defaultContent.aboutTitle,
+            aboutContent: parsed.aboutContent || defaultContent.aboutContent,
+            philosophyTitle: parsed.philosophyTitle || defaultContent.philosophyTitle,
+            philosophyContent: parsed.philosophyContent || defaultContent.philosophyContent,
+          });
+        }
       } catch (e) {
         console.error('Failed to parse site content', e);
+        // On parse error, reset to defaults
+        const newContent = {
+          ...defaultContent,
+          version: CONTENT_VERSION,
+        };
+        localStorage.setItem('demo_site_content', JSON.stringify(newContent));
+        setContent(defaultContent);
       }
+    } else {
+      // No stored content - save defaults with version
+      const newContent = {
+        ...defaultContent,
+        version: CONTENT_VERSION,
+      };
+      localStorage.setItem('demo_site_content', JSON.stringify(newContent));
     }
   }, []);
 
