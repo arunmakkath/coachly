@@ -1,4 +1,5 @@
-import pdf from 'pdf-parse';
+// Use require for CommonJS module
+const pdfParse = require('pdf-parse');
 
 export interface ParsedDocument {
   text: string;
@@ -13,7 +14,7 @@ export interface ParsedDocument {
 // Parse PDF file from buffer
 export async function parsePDF(buffer: Buffer): Promise<ParsedDocument> {
   try {
-    const data = await pdf(buffer);
+    const data = await pdfParse(buffer);
 
     return {
       text: data.text,
