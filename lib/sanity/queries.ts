@@ -68,7 +68,7 @@ export async function getSettings() {
 // Query all unprocessed documents
 export async function getUnprocessedDocuments() {
   return sanityClient.fetch(
-    `*[_type == "document" && isProcessed == false] {
+    `*[_type == "knowledgeDocument" && isProcessed == false] {
       _id,
       title,
       "fileUrl": file.asset->url,
@@ -80,7 +80,7 @@ export async function getUnprocessedDocuments() {
 // Query all documents
 export async function getAllDocuments() {
   return sanityClient.fetch(
-    `*[_type == "document"] | order(uploadedAt desc) {
+    `*[_type == "knowledgeDocument"] | order(uploadedAt desc) {
       _id,
       title,
       "fileUrl": file.asset->url,
