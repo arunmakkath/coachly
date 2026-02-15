@@ -89,9 +89,9 @@ When you work with me, you are choosing a partner who values consistency and acc
               {content.heroSubtitle}
             </p>
             <div className="flex gap-4 justify-center">
-              <Link href="/checkout">
+              <Link href="/contact">
                 <Button size="lg">
-                  Become a Member
+                  Get in Touch
                 </Button>
               </Link>
               <Link href="/about">
@@ -144,12 +144,11 @@ When you work with me, you are choosing a partner who values consistency and acc
               Ready to Elevate Your Leadership?
             </h2>
             <p className="text-lg text-neutral-700 mb-8">
-              Join executives who are transforming their leadership with strategic coaching,
-              exclusive insights, and 24/7 AI-powered support.
+              Connect with me to learn how strategic coaching can transform your leadership journey.
             </p>
-            <Link href="/checkout">
+            <Link href="/contact">
               <Button size="lg">
-                Start Your Journey Today
+                Contact Me
               </Button>
             </Link>
           </div>
