@@ -1,10 +1,9 @@
 import { notFound } from 'next/navigation';
-import Image from 'next/image';
-import { getPostBySlug } from '@/lib/sanity/queries';
-import { urlFor } from '@/lib/sanity/client';
 import { auth } from '@clerk/nextjs/server';
+import fs from 'fs/promises';
+import path from 'path';
 
-export const revalidate = 60;
+export const revalidate = 0; // Always fetch fresh data
 
 export default async function BlogPostPage({
   params,
@@ -12,7 +11,18 @@ export default async function BlogPostPage({
   params: Promise<{ slug: string }>;
 }) {
   const { slug } = await params;
-  const post = await getPostBySlug(slug);
+
+  // Read posts from JSON file
+  let posts: any[] = [];
+  try {
+    const filePath = path.join(process.cwd(), 'content', 'posts.json');
+    const content = await fs.readFile(filePath, 'utf-8');
+    posts = JSON.parse(content);
+  } catch (error) {
+    console.error('Failed to load posts:', error);
+  }
+
+  const post = posts.find(p => p.slug?.current === slug);
 
   if (!post) {
     notFound();
@@ -35,10 +45,10 @@ export default async function BlogPostPage({
               This article is available exclusively to our members.
             </p>
             <a
-              href="/checkout"
+              href="/contact"
               className="inline-block bg-primary text-white px-6 py-3 rounded-md hover:bg-primary/90 transition-colors"
             >
-              Become a Member
+              Get in Touch
             </a>
           </div>
         </div>
@@ -49,17 +59,6 @@ export default async function BlogPostPage({
   return (
     <article className="py-12">
       <div className="container max-w-3xl">
-        {post.coverImage && (
-          <div className="relative h-96 w-full mb-8 rounded-lg overflow-hidden">
-            <Image
-              src={urlFor(post.coverImage).width(1200).height(600).url()}
-              alt={post.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
-
         <h1 className="font-serif text-4xl md:text-5xl font-bold text-neutral-900 mb-4">
           {post.title}
         </h1>
@@ -91,21 +90,7 @@ export default async function BlogPostPage({
         )}
 
         <div className="prose prose-lg max-w-none">
-          {/* Simplified content rendering - in production, use @portabletext/react */}
-          {post.content && (
-            <div>
-              {post.content.map((block: any, index: number) => {
-                if (block._type === 'block') {
-                  return (
-                    <p key={index} className="mb-4">
-                      {block.children?.map((child: any) => child.text).join('')}
-                    </p>
-                  );
-                }
-                return null;
-              })}
-            </div>
-          )}
+          <div className="whitespace-pre-wrap">{post.content}</div>
         </div>
       </div>
     </article>
