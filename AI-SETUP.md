@@ -56,10 +56,9 @@ GEMINI_API_KEY=your-gemini-api-key
 
 ## Step 4: Test the AI Assistant
 
-1. Sign in as a member (or become a member)
-2. Go to the dashboard at `/dashboard`
-3. Look for the floating chat button in the bottom-right corner
-4. Click it and ask a question about your coaching techniques
+1. Go to your website homepage
+2. Look for the floating chat button in the bottom-right corner
+3. Click it and ask a question about your coaching techniques
 
 The AI will respond based on the knowledge documents you added.
 
@@ -67,7 +66,7 @@ The AI will respond based on the knowledge documents you added.
 
 - **RAG (Retrieval-Augmented Generation):** The AI searches through your knowledge base to find relevant information before answering
 - **Context-Aware:** Responses are based on your actual coaching techniques and philosophy
-- **Members Only:** Only paid members can access the AI assistant
+- **Public Access:** Available to all visitors on your website
 - **Always Available:** 24/7 access to coaching insights
 
 ## Troubleshooting

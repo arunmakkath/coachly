@@ -1,5 +1,4 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { auth } from '@clerk/nextjs/server';
 
 // Removed edge runtime to avoid build-time import issues
 // export const runtime = 'edge';
@@ -15,20 +14,6 @@ export async function POST(request: NextRequest) {
         },
         { status: 503 }
       );
-    }
-
-    // Verify user is authenticated and is a member
-    const { userId, sessionClaims } = await auth();
-
-    if (!userId) {
-      return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
-    }
-
-    const roles = (sessionClaims?.metadata as any)?.role || [];
-    const isMember = roles.includes('member') || roles.includes('admin');
-
-    if (!isMember) {
-      return NextResponse.json({ error: 'Members only' }, { status: 403 });
     }
 
     // Get the user's message
