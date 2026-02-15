@@ -1,14 +1,20 @@
-'use client';
-
-import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
+import { getHomeContent } from '@/lib/sanity/queries';
 
-// Content version - increment this when default content changes
-const CONTENT_VERSION = '1.0.0';
+// Force dynamic rendering to avoid build-time Sanity fetch issues
+export const dynamic = 'force-dynamic';
 
-export default function HomePage() {
-  // Default content - Satheesan Edavath's coaching website
+export default async function HomePage() {
+  // Fetch content from Sanity (will return null if not configured)
+  let sanityContent = null;
+  try {
+    sanityContent = await getHomeContent();
+  } catch (error) {
+    console.log('Sanity not configured, using defaults');
+  }
+
+  // Fallback to default content if Sanity not configured
   const defaultContent = {
     heroTitle: 'Unlock Your Potential with Strategic Executive Coaching',
     heroSubtitle: 'Empowering leaders to navigate business transformation through two decades of global management expertise. My approach combines proven leadership at BOIPL with 24/7 AI-supported coaching for continuous professional growth.',
@@ -26,55 +32,8 @@ My methodology utilizes Systemic Team Coaching and Action-Oriented Mentorship. W
 When you work with me, you are choosing a partner who values consistency and accessibility. To ensure your progress remains constant between our deep-dive sessions, I offer a unique 24/7 AI-powered coaching assistant. This tool serves as a digital extension of our work, providing you with resources, accountability, and strategic reflection at any hour, ensuring your journey toward potential never pauses.`,
   };
 
-  const [content, setContent] = useState(defaultContent);
-
-  useEffect(() => {
-    // Load custom content from localStorage if available
-    const savedContent = localStorage.getItem('demo_site_content');
-    if (savedContent) {
-      try {
-        const parsed = JSON.parse(savedContent);
-
-        // Check if stored version matches current version
-        if (parsed.version !== CONTENT_VERSION) {
-          // Version mismatch - reset to new default content
-          console.log('Content version updated, resetting to defaults');
-          const newContent = {
-            ...defaultContent,
-            version: CONTENT_VERSION,
-          };
-          localStorage.setItem('demo_site_content', JSON.stringify(newContent));
-          setContent(defaultContent);
-        } else {
-          // Version matches - use stored content
-          setContent({
-            heroTitle: parsed.heroTitle || defaultContent.heroTitle,
-            heroSubtitle: parsed.heroSubtitle || defaultContent.heroSubtitle,
-            aboutTitle: parsed.aboutTitle || defaultContent.aboutTitle,
-            aboutContent: parsed.aboutContent || defaultContent.aboutContent,
-            philosophyTitle: parsed.philosophyTitle || defaultContent.philosophyTitle,
-            philosophyContent: parsed.philosophyContent || defaultContent.philosophyContent,
-          });
-        }
-      } catch (e) {
-        console.error('Failed to parse site content', e);
-        // On parse error, reset to defaults
-        const newContent = {
-          ...defaultContent,
-          version: CONTENT_VERSION,
-        };
-        localStorage.setItem('demo_site_content', JSON.stringify(newContent));
-        setContent(defaultContent);
-      }
-    } else {
-      // No stored content - save defaults with version
-      const newContent = {
-        ...defaultContent,
-        version: CONTENT_VERSION,
-      };
-      localStorage.setItem('demo_site_content', JSON.stringify(newContent));
-    }
-  }, []);
+  // Use Sanity content if available, otherwise use defaults
+  const content = sanityContent || defaultContent;
 
   return (
     <div>
