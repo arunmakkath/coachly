@@ -1,9 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
-import { retrieveContext, buildRAGPrompt } from '@/lib/gemini/rag';
-import { generateStreamingChatResponse } from '@/lib/gemini/client';
 
-export const runtime = 'edge';
+// Removed edge runtime to avoid build-time import issues
+// export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
   try {
@@ -38,6 +37,10 @@ export async function POST(request: NextRequest) {
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Invalid message' }, { status: 400 });
     }
+
+    // Dynamic imports to avoid build-time issues
+    const { retrieveContext, buildRAGPrompt } = await import('@/lib/gemini/rag');
+    const { generateStreamingChatResponse } = await import('@/lib/gemini/client');
 
     // Retrieve relevant context using RAG
     const context = await retrieveContext(message, 5);
