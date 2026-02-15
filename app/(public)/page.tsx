@@ -1,39 +1,26 @@
 import Link from 'next/link';
 import { Button } from '@/components/ui/button';
-import { getHomeContent } from '@/lib/sanity/queries';
-
-// Force dynamic rendering to avoid build-time Sanity fetch issues
-export const dynamic = 'force-dynamic';
+import fs from 'fs/promises';
+import path from 'path';
 
 export default async function HomePage() {
-  // Fetch content from Sanity (will return null if not configured)
-  let sanityContent = null;
+  // Read content from JSON file
+  let content;
   try {
-    sanityContent = await getHomeContent();
+    const filePath = path.join(process.cwd(), 'content', 'home.json');
+    const fileContent = await fs.readFile(filePath, 'utf-8');
+    content = JSON.parse(fileContent);
   } catch (error) {
-    console.log('Sanity not configured, using defaults');
+    // Fallback to default content
+    content = {
+      heroTitle: 'Unlock Your Potential with Strategic Executive Coaching',
+      heroSubtitle: 'Empowering leaders to navigate business transformation through two decades of global management expertise.',
+      aboutTitle: 'About Satheesan',
+      aboutContent: 'Professional executive coaching with 20+ years of experience.',
+      philosophyTitle: 'My Coaching Philosophy',
+      philosophyContent: 'Leadership transformation through systemic team coaching.',
+    };
   }
-
-  // Fallback to default content if Sanity not configured
-  const defaultContent = {
-    heroTitle: 'Unlock Your Potential with Strategic Executive Coaching',
-    heroSubtitle: 'Empowering leaders to navigate business transformation through two decades of global management expertise. My approach combines proven leadership at BOIPL with 24/7 AI-supported coaching for continuous professional growth.',
-    aboutTitle: 'About Satheesan',
-    aboutContent: `I bring more than 20 years of management experience across diverse product and service organizations in the US, the UK, and India. My leadership journey reached a pivotal chapter in 2014 when I joined British Orient Infotel (BOIPL) as Chief Operating Officer. Over the years, I have been responsible for the company's strategic planning and execution, guiding it through complex mergers and acquisitions and transforming it into a high-performing, professional organization. Currently serving as CEO and Board Member, I understand the intricacies of driving growth in a competitive global landscape.
-
-My transition into coaching was born from the realization that sustainable business success is inseparable from the growth of its people. Throughout my career, I found that my most impactful work occurred while mentoring teams to navigate organizational change and operational challenges. As a Certified Professional Coach and Systemic Team Coach, I have dedicated myself to helping other executives bridge the gap between their current leadership style and their highest potential.
-
-What makes my approach authentic is that it is forged in the reality of the boardroom and the front lines of international operations. I don't offer theoretical advice; I provide strategic partnership based on years of managing cross-geographical teams and delivering large-scale business transformations. My goal is to help you achieve measurable results while building a resilient leadership legacy.`,
-    philosophyTitle: 'My Coaching Philosophy',
-    philosophyContent: `I believe that leadership transformation is a systemic process. My core belief is that personal growth is the catalyst for organizational excellence. In a rapidly evolving market, a leader's ability to remain agile and strategically aligned is their greatest asset. I coach from a place of partnership, focusing on unlocking the innate potential within you to meet the group's overarching goals and objectives.
-
-My methodology utilizes Systemic Team Coaching and Action-Oriented Mentorship. We examine the entirety of your professional ecosystem—from your internal decision-making processes to the external pressures of global competition. We focus on creating a blueprint for "Professional Maturity," ensuring that every goal we set leads to a tangible, professional transformation that scales alongside your business.
-
-When you work with me, you are choosing a partner who values consistency and accessibility. To ensure your progress remains constant between our deep-dive sessions, I offer a unique 24/7 AI-powered coaching assistant. This tool serves as a digital extension of our work, providing you with resources, accountability, and strategic reflection at any hour, ensuring your journey toward potential never pauses.`,
-  };
-
-  // Use Sanity content if available, otherwise use defaults
-  const content = sanityContent || defaultContent;
 
   return (
     <div>
