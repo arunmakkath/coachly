@@ -8,11 +8,11 @@ export default function BlogPage() {
   const [posts, setPosts] = useState<any[]>([]);
 
   useEffect(() => {
-    // Load posts from localStorage
-    const savedPosts = localStorage.getItem('demo_posts');
-    if (savedPosts) {
-      setPosts(JSON.parse(savedPosts));
-    }
+    // Load posts from API
+    fetch('/api/content/posts')
+      .then(res => res.json())
+      .then(data => setPosts(data))
+      .catch(err => console.error('Failed to load posts:', err));
   }, []);
 
   return (
