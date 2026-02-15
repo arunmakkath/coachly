@@ -47,11 +47,9 @@ export default function ChatWidget() {
           </svg>
         )}
 
-        {/* Notification Badge (optional - can be used for unread messages) */}
+        {/* Notification Badge - indicates AI is ready */}
         {!isOpen && (
-          <span className="absolute -top-1 -right-1 w-4 h-4 bg-red-500 rounded-full flex items-center justify-center text-xs font-bold animate-pulse">
-
-          </span>
+          <span className="absolute -top-1 -right-1 w-3 h-3 bg-green-500 rounded-full border-2 border-white"></span>
         )}
       </button>
     </>
