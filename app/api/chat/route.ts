@@ -7,6 +7,17 @@ export const runtime = 'edge';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if required services are configured
+    if (!process.env.NEXT_PUBLIC_SUPABASE_URL || !process.env.GEMINI_API_KEY) {
+      return NextResponse.json(
+        {
+          error: 'AI chat not configured',
+          message: 'This is a demo environment. To enable AI chat, configure Supabase and Gemini API credentials.'
+        },
+        { status: 503 }
+      );
+    }
+
     // Verify user is authenticated and is a member
     const { userId, sessionClaims } = await auth();
 
