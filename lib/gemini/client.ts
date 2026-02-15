@@ -1,16 +1,52 @@
-import { GoogleGenerativeAI } from '@google/generative-ai';
+import { GoogleGenerativeAI, GenerativeModel } from '@google/generative-ai';
 
-const apiKey = process.env.GEMINI_API_KEY!;
-const genAI = new GoogleGenerativeAI(apiKey);
+// Lazy initialization
+let genAIInstance: GoogleGenerativeAI | null = null;
+let chatModelInstance: GenerativeModel | null = null;
+let embeddingModelInstance: GenerativeModel | null = null;
+
+function getGenAI(): GoogleGenerativeAI {
+  if (!genAIInstance) {
+    const apiKey = process.env.GEMINI_API_KEY;
+    if (!apiKey) {
+      throw new Error('Gemini API not configured. Set GEMINI_API_KEY environment variable.');
+    }
+    genAIInstance = new GoogleGenerativeAI(apiKey);
+  }
+  return genAIInstance;
+}
 
 // Model for chat (Gemini 1.5 Flash)
-export const chatModel = genAI.getGenerativeModel({
-  model: 'gemini-1.5-flash',
-});
+function getChatModel(): GenerativeModel {
+  if (!chatModelInstance) {
+    chatModelInstance = getGenAI().getGenerativeModel({
+      model: 'gemini-1.5-flash',
+    });
+  }
+  return chatModelInstance;
+}
 
 // Model for embeddings
-export const embeddingModel = genAI.getGenerativeModel({
-  model: 'text-embedding-004',
+function getEmbeddingModel(): GenerativeModel {
+  if (!embeddingModelInstance) {
+    embeddingModelInstance = getGenAI().getGenerativeModel({
+      model: 'text-embedding-004',
+    });
+  }
+  return embeddingModelInstance;
+}
+
+// For backward compatibility
+export const chatModel = new Proxy({} as GenerativeModel, {
+  get(_target, prop) {
+    return getChatModel()[prop as keyof GenerativeModel];
+  }
+});
+
+export const embeddingModel = new Proxy({} as GenerativeModel, {
+  get(_target, prop) {
+    return getEmbeddingModel()[prop as keyof GenerativeModel];
+  }
 });
 
 // Generate text embedding
