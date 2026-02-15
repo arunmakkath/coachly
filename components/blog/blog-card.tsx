@@ -1,35 +1,26 @@
 import Link from 'next/link';
-import Image from 'next/image';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
-import { urlFor } from '@/lib/sanity/client';
 
 interface BlogCardProps {
   post: {
-    _id: string;
+    _id?: string;
+    id?: string;
     title: string;
-    slug: { current: string };
+    slug: { current: string } | any;
     excerpt?: string;
     publishedAt: string;
-    coverImage?: any;
     categories?: string[];
     isFree: boolean;
   };
 }
 
 export default function BlogCard({ post }: BlogCardProps) {
+  // Handle both Sanity and file-based slug formats
+  const slug = typeof post.slug === 'string' ? post.slug : post.slug?.current;
+
   return (
-    <Link href={`/blog/${post.slug.current}`}>
+    <Link href={`/blog/${slug}`}>
       <Card className="overflow-hidden hover:shadow-lg transition-shadow h-full">
-        {post.coverImage && (
-          <div className="relative h-48 w-full">
-            <Image
-              src={urlFor(post.coverImage).width(400).height(200).url()}
-              alt={post.title}
-              fill
-              className="object-cover"
-            />
-          </div>
-        )}
         <CardHeader>
           <div className="flex items-center gap-2 mb-2">
             {!post.isFree && (

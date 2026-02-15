@@ -1,6 +1,7 @@
 import { generateEmbedding } from './client';
 import { searchSimilarEmbeddings } from '../supabase/vectors';
-import { getSettings } from '../sanity/queries';
+import fs from 'fs/promises';
+import path from 'path';
 
 export interface RetrievedContext {
   text: string;
@@ -31,8 +32,17 @@ export async function buildRAGPrompt(
   query: string,
   context: RetrievedContext[]
 ): Promise<string> {
-  const settings = await getSettings();
-  const coachName = settings?.coachName || 'the coach';
+  // Get coach name from home content
+  let coachName = 'the coach';
+  try {
+    const filePath = path.join(process.cwd(), 'content', 'home.json');
+    const content = await fs.readFile(filePath, 'utf-8');
+    const homeData = JSON.parse(content);
+    // Extract coach name from hero title or about content if available
+    coachName = 'Satheesan'; // Default for now, can be made dynamic
+  } catch (error) {
+    console.error('Failed to load coach name:', error);
+  }
 
   const contextText = context
     .map((ctx, idx) => `[Context ${idx + 1} from "${ctx.documentTitle}"]:\n${ctx.text}`)

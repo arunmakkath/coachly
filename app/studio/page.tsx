@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import { Button } from '@/components/ui/button';
 
-type Tab = 'home' | 'about' | 'contact' | 'blog';
+type Tab = 'home' | 'about' | 'contact' | 'blog' | 'documents';
 
 export default function StudioPage() {
   const [activeTab, setActiveTab] = useState<Tab>('home');
@@ -45,6 +45,16 @@ export default function StudioPage() {
     isFree: true,
   });
 
+  // Knowledge documents
+  const [documents, setDocuments] = useState<any[]>([]);
+  const [showDocForm, setShowDocForm] = useState(false);
+  const [editingDoc, setEditingDoc] = useState<any>(null);
+  const [docForm, setDocForm] = useState({
+    title: '',
+    content: '',
+  });
+  const [refreshingAI, setRefreshingAI] = useState(false);
+
   // Load all content on mount
   useEffect(() => {
     Promise.all([
@@ -52,12 +62,14 @@ export default function StudioPage() {
       fetch('/api/content/about').then(r => r.json()),
       fetch('/api/content/contact').then(r => r.json()),
       fetch('/api/content/posts').then(r => r.json()),
+      fetch('/api/content/documents').then(r => r.json()),
     ])
-      .then(([home, about, contact, posts]) => {
+      .then(([home, about, contact, posts, documents]) => {
         setHomeContent(home);
         setAboutContent(about);
         setContactContent(contact);
         setPosts(posts);
+        setDocuments(documents);
         setLoading(false);
       })
       .catch(error => {
@@ -184,6 +196,92 @@ export default function StudioPage() {
     }
   };
 
+  // Document handlers
+  const handleSaveDocuments = async () => {
+    setSaving(true);
+    setMessage('');
+    try {
+      const response = await fetch('/api/content/documents', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(documents),
+      });
+      const result = await response.json();
+      setMessage(result.message || 'Documents saved!');
+    } catch (error) {
+      setMessage('Failed to save documents');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleAddDocument = () => {
+    if (!docForm.title || !docForm.content) {
+      alert('Please fill in all fields');
+      return;
+    }
+
+    const newDoc = {
+      id: editingDoc?.id || `doc-${Date.now()}`,
+      title: docForm.title,
+      content: docForm.content,
+      uploadedAt: editingDoc?.uploadedAt || new Date().toISOString(),
+    };
+
+    if (editingDoc) {
+      setDocuments(documents.map(d => d.id === editingDoc.id ? newDoc : d));
+    } else {
+      setDocuments([newDoc, ...documents]);
+    }
+
+    setDocForm({ title: '', content: '' });
+    setEditingDoc(null);
+    setShowDocForm(false);
+    setMessage('Document added! Click "Save All Documents" to save changes.');
+  };
+
+  const handleEditDocument = (doc: any) => {
+    setEditingDoc(doc);
+    setDocForm({
+      title: doc.title,
+      content: doc.content,
+    });
+    setShowDocForm(true);
+  };
+
+  const handleDeleteDocument = (docId: string) => {
+    if (confirm('Delete this document? This will also remove it from AI knowledge after refresh.')) {
+      setDocuments(documents.filter(d => d.id !== docId));
+      setMessage('Document deleted! Click "Save All Documents" and then "Refresh AI Knowledge" to update.');
+    }
+  };
+
+  const handleRefreshAI = async () => {
+    if (!confirm('This will regenerate all AI embeddings. Continue?')) {
+      return;
+    }
+
+    setRefreshingAI(true);
+    setMessage('Processing documents and generating embeddings... This may take a few minutes.');
+
+    try {
+      const response = await fetch('/api/embeddings/refresh', {
+        method: 'POST',
+      });
+      const result = await response.json();
+
+      if (result.success) {
+        setMessage(`Success! Processed ${result.documentsProcessed} documents with ${result.totalChunks} chunks.`);
+      } else {
+        setMessage(result.error || 'Failed to refresh AI knowledge');
+      }
+    } catch (error) {
+      setMessage('Failed to refresh AI knowledge');
+    } finally {
+      setRefreshingAI(false);
+    }
+  };
+
   if (loading) {
     return (
       <div className="min-h-screen bg-neutral-50 flex items-center justify-center">
@@ -255,6 +353,16 @@ export default function StudioPage() {
                 }`}
               >
                 Blog Posts ({posts.length})
+              </button>
+              <button
+                onClick={() => setActiveTab('documents')}
+                className={`px-6 py-3 font-medium transition-colors ${
+                  activeTab === 'documents'
+                    ? 'border-b-2 border-primary text-primary'
+                    : 'text-neutral-600 hover:text-neutral-900'
+                }`}
+              >
+                AI Knowledge ({documents.length})
               </button>
             </div>
           </div>
@@ -546,6 +654,132 @@ export default function StudioPage() {
             </div>
           )}
         </div>
+
+        {/* Documents Tab */}
+        {activeTab === 'documents' && (
+          <div className="space-y-8">
+            <div className="bg-blue-50 p-6 rounded-lg border border-blue-200">
+              <h3 className="font-semibold text-blue-900 mb-2">AI Knowledge Base</h3>
+              <p className="text-sm text-blue-800 mb-3">
+                Add documents containing your coaching techniques, philosophies, and methods.
+                The AI assistant will use this knowledge to answer member questions.
+              </p>
+              <p className="text-sm text-blue-700">
+                After adding or editing documents, click "Refresh AI Knowledge" to process them.
+              </p>
+            </div>
+
+            <div className="flex items-center gap-4">
+              <Button onClick={() => setShowDocForm(true)}>
+                Add New Document
+              </Button>
+              <Button
+                onClick={handleSaveDocuments}
+                disabled={saving}
+                variant="outline"
+              >
+                {saving ? 'Saving...' : 'Save All Documents'}
+              </Button>
+              <Button
+                onClick={handleRefreshAI}
+                disabled={refreshingAI || documents.length === 0}
+                variant="outline"
+                className="bg-green-50 hover:bg-green-100 text-green-700"
+              >
+                {refreshingAI ? 'Processing...' : 'Refresh AI Knowledge'}
+              </Button>
+            </div>
+
+            {/* Documents List */}
+            {documents.length > 0 ? (
+              <div className="space-y-4">
+                {documents.map((doc) => (
+                  <div key={doc.id} className="border border-neutral-200 rounded-lg p-6 bg-white">
+                    <div className="flex justify-between items-start mb-2">
+                      <h3 className="text-xl font-semibold text-neutral-900">{doc.title}</h3>
+                      <div className="flex gap-2">
+                        <button
+                          onClick={() => handleEditDocument(doc)}
+                          className="text-sm text-primary hover:underline"
+                        >
+                          Edit
+                        </button>
+                        <button
+                          onClick={() => handleDeleteDocument(doc.id)}
+                          className="text-sm text-red-600 hover:underline"
+                        >
+                          Delete
+                        </button>
+                      </div>
+                    </div>
+                    <p className="text-sm text-neutral-600 mb-2">
+                      Added: {new Date(doc.uploadedAt).toLocaleDateString()}
+                    </p>
+                    <p className="text-neutral-700 line-clamp-3">{doc.content}</p>
+                  </div>
+                ))}
+              </div>
+            ) : (
+              <div className="text-center py-12 bg-neutral-50 rounded-lg">
+                <p className="text-neutral-600">No documents yet. Add your first coaching document!</p>
+              </div>
+            )}
+
+            {/* Document Form */}
+            {showDocForm && (
+              <div className="fixed inset-0 bg-black/50 flex items-center justify-center p-4 z-50">
+                <div className="bg-white rounded-lg p-8 max-w-3xl w-full max-h-[90vh] overflow-y-auto">
+                  <h3 className="text-2xl font-semibold mb-6">
+                    {editingDoc ? 'Edit Document' : 'Add New Document'}
+                  </h3>
+
+                  <div className="space-y-6">
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Document Title</label>
+                      <input
+                        type="text"
+                        value={docForm.title}
+                        onChange={(e) => setDocForm({...docForm, title: e.target.value})}
+                        className="w-full px-4 py-2 border border-neutral-300 rounded-md"
+                        placeholder="e.g., Executive Coaching Framework"
+                      />
+                    </div>
+
+                    <div>
+                      <label className="block text-sm font-medium mb-2">Content</label>
+                      <textarea
+                        value={docForm.content}
+                        onChange={(e) => setDocForm({...docForm, content: e.target.value})}
+                        rows={15}
+                        className="w-full px-4 py-2 border border-neutral-300 rounded-md font-mono text-sm"
+                        placeholder="Paste your coaching content here..."
+                      />
+                      <p className="text-xs text-neutral-500 mt-1">
+                        {docForm.content.length} characters
+                      </p>
+                    </div>
+
+                    <div className="flex gap-4">
+                      <Button onClick={handleAddDocument}>
+                        {editingDoc ? 'Update Document' : 'Add Document'}
+                      </Button>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setShowDocForm(false);
+                          setEditingDoc(null);
+                          setDocForm({ title: '', content: '' });
+                        }}
+                      >
+                        Cancel
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
       </div>
     </div>
   );

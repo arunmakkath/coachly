@@ -1,6 +1,7 @@
 import { auth, currentUser } from '@clerk/nextjs/server';
-import { getAllPosts, getSettings } from '@/lib/sanity/queries';
 import BlogCard from '@/components/blog/blog-card';
+import fs from 'fs/promises';
+import path from 'path';
 
 // Force dynamic rendering since this page requires authentication
 export const dynamic = 'force-dynamic';
@@ -8,8 +9,20 @@ export const dynamic = 'force-dynamic';
 export default async function DashboardPage() {
   const { userId } = await auth();
   const user = await currentUser();
-  const settings = await getSettings();
-  const recentPosts = await getAllPosts(false); // Get member-only posts
+
+  // Load posts from JSON
+  let recentPosts: any[] = [];
+  try {
+    const filePath = path.join(process.cwd(), 'content', 'posts.json');
+    const content = await fs.readFile(filePath, 'utf-8');
+    const allPosts = JSON.parse(content);
+    // Filter member-only posts
+    recentPosts = allPosts.filter((post: any) => !post.isFree);
+  } catch (error) {
+    console.error('Failed to load posts:', error);
+  }
+
+  const coachName = 'Satheesan'; // Default coach name
 
   return (
     <div className="py-12">
@@ -19,7 +32,7 @@ export default async function DashboardPage() {
             Welcome back, {user?.firstName || 'Member'}!
           </h1>
           <p className="text-lg text-neutral-600 mb-12">
-            Access your exclusive content and chat with {settings?.coachName || 'your coach'}&apos;s AI assistant.
+            Access your exclusive content and chat with {coachName}&apos;s AI assistant.
           </p>
 
           <div className="grid gap-8">
@@ -44,11 +57,15 @@ export default async function DashboardPage() {
             {/* Recent Premium Content */}
             <div>
               <h2 className="text-2xl font-bold text-neutral-900 mb-6">Recent Premium Content</h2>
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                {recentPosts?.slice(0, 4).map((post: any) => (
-                  <BlogCard key={post._id} post={post} />
-                ))}
-              </div>
+              {recentPosts.length > 0 ? (
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                  {recentPosts.slice(0, 4).map((post: any) => (
+                    <BlogCard key={post.id} post={post} />
+                  ))}
+                </div>
+              ) : (
+                <p className="text-neutral-600">No premium content yet.</p>
+              )}
             </div>
 
             {/* AI Chat Introduction */}
@@ -58,7 +75,7 @@ export default async function DashboardPage() {
               </h2>
               <p className="text-neutral-700 mb-4">
                 Have questions? Click the chat button in the bottom-right corner to talk with
-                {settings?.coachName ? ` ${settings.coachName}'s` : ' the'} AI assistant, trained on exclusive
+                {` ${coachName}'s`} AI assistant, trained on exclusive
                 coaching techniques and philosophy.
               </p>
               <p className="text-sm text-neutral-600">
