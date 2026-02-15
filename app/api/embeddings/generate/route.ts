@@ -1,7 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { auth } from '@clerk/nextjs/server';
 import { getAllDocuments } from '@/lib/sanity/queries';
-import { parsePDFFromURL, cleanText } from '@/lib/utils/pdf-parser';
 import { chunkText } from '@/lib/gemini/rag';
 import { generateEmbeddingsBatch } from '@/lib/gemini/client';
 import { insertEmbeddings } from '@/lib/supabase/vectors';
@@ -9,6 +8,14 @@ import { sanityWriteClient } from '@/lib/sanity/client';
 
 export async function POST(request: NextRequest) {
   try {
+    // Check if external services are configured
+    if (!process.env.NEXT_PUBLIC_SANITY_PROJECT_ID || !process.env.SUPABASE_SERVICE_ROLE_KEY) {
+      return NextResponse.json(
+        { error: 'External services not configured. This feature requires Sanity and Supabase setup.' },
+        { status: 503 }
+      );
+    }
+
     // Verify user is admin
     const { userId, sessionClaims } = await auth();
 
@@ -33,6 +40,9 @@ export async function POST(request: NextRequest) {
     if (!document || !document.fileUrl) {
       return NextResponse.json({ error: 'Document not found' }, { status: 404 });
     }
+
+    // Dynamic import of pdf-parser to avoid build-time errors
+    const { parsePDFFromURL, cleanText } = await import('@/lib/utils/pdf-parser');
 
     // Parse the PDF
     const parsed = await parsePDFFromURL(document.fileUrl);

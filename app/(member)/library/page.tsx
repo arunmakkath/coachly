@@ -1,6 +1,9 @@
 import { getAllPosts, getAllDocuments } from '@/lib/sanity/queries';
 import BlogCard from '@/components/blog/blog-card';
 
+// Force dynamic rendering since this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default async function LibraryPage() {
   const posts = await getAllPosts(false); // Member-only posts
   const documents = await getAllDocuments();

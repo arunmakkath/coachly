@@ -2,6 +2,9 @@ import { auth, currentUser } from '@clerk/nextjs/server';
 import { getAllPosts, getSettings } from '@/lib/sanity/queries';
 import BlogCard from '@/components/blog/blog-card';
 
+// Force dynamic rendering since this page requires authentication
+export const dynamic = 'force-dynamic';
+
 export default async function DashboardPage() {
   const { userId } = await auth();
   const user = await currentUser();
